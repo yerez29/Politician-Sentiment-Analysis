@@ -3,7 +3,7 @@ import sys
 import nltk
 import pandas as pd
 from textblob import TextBlob
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
@@ -58,33 +58,29 @@ def getMarks(relevant_comments, comments_file_name):
     date = comments_file_name[8:len(comments_file_name) - 4]
     for comment in relevant_comments:
         blob = TextBlob(comment)
-        comment_sentence_num = 0
-        cur_mark = 0
-        for sentence in blob.sentences:
-            cur_mark += sentence.sentiment.polarity
-            comment_sentence_num += 1
-            break
-        cur_average_mark = cur_mark / comment_sentence_num
+        cur_average_mark = blob.sentences[0].sentiment.polarity
         general_mark += cur_average_mark
-        if cur_average_mark > 0.1:
-            if cur_average_mark > 0.4:
+        if cur_average_mark > 0.05:
+            if cur_average_mark > 0.3:
                 very_positive_mark += 1
             else:
                 slightly_positive_mark += 1
-        elif cur_average_mark < -0.1:
-            if cur_average_mark < -0.4:
+        elif cur_average_mark < -0.05:
+            if cur_average_mark < -0.3:
                 very_negative_mark += 1
             else:
                 slightly_negative_mark += 1
         else:
             natural_mark += 1
     general_mark /= num_of_comments
-    print("very positive rate in", date, "is", (very_positive_mark / num_of_comments) * 100, "percent")
-    print("slightly positive rate in", date, "is", (slightly_positive_mark / num_of_comments) * 100, "percent")
-    print("slightly negative rate in", date, "is", (slightly_negative_mark / num_of_comments) * 100, "percent")
-    print("very negative rate in", date, "is", (very_negative_mark / num_of_comments) * 100, "percent")
-    print("natural rate in", date, "is", (natural_mark / num_of_comments) * 100, "percent")
     print("total normalized mark in", date, "is", general_mark)
+    labels = 'Very positive', 'Slightly positive', 'Slightly negative', 'Very negative', 'Natural'
+    sizes = [(very_positive_mark / num_of_comments) * 100, (slightly_positive_mark / num_of_comments) * 100, (slightly_negative_mark / num_of_comments) * 100, (very_negative_mark / num_of_comments) * 100, (natural_mark / num_of_comments) * 100]
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
+    ax1.axis('equal')
+    plt.show()
+    plt.clf()
 
 
 keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
