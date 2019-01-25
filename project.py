@@ -6,7 +6,7 @@ from textblob import TextBlob
 import matplotlib.pyplot as plt
 from math import ceil
 from textblob.classifiers import NaiveBayesClassifier
-
+from copy import deepcopy
 
 def getArticles(keywords_list, articles_file_name):
     """
@@ -61,7 +61,6 @@ def getGeneralOpinions(relevant_comments, comments_file_name):
     slightly_negative_mark = 0
     very_negative_mark = 0
     natural_mark = 0
-    geo_location_marks = {}
     num_of_comments = len(relevant_comments)
     num_of_trains = ceil(num_of_comments / 100)
     date = comments_file_name[8:len(comments_file_name) - 4]
@@ -172,27 +171,92 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
     df = pd.read_csv(comments_file_name)
     locations_column = df.userLocation
     countries_dict = {}
-    rates_dict = {"very pos":0, "slightly pos":0, "natural":0, "slightly neg":0, "very neg":0}
+    rates_dict = {"very pos" : 0, "slightly pos" : 0, "natural" : 0, "slightly neg" : 0, "very neg" : 0}
     for country in list_of_countries:
-        countries_dict[country] = rates_dict
+        countries_dict[country[1]] = deepcopy(rates_dict)
     i = 0
     for comment in relevantComments:
         analysis = TextBlob(comment)
         comment_mark = analysis.sentences[0].sentiment.polarity
         if comment_mark > 0.00:
             if comment_mark > 0.3:
-                address = locations_column[relevantComments[i]]
-                
+                address = locations_column[comments_indices[i]]
+                if type(address) is str:
+                    flag = False
+                    for country in list_of_countries:
+                        for abb in country:
+                            if abb in address:
+                                countries_dict[country[1]]["very pos"] += 1
+                                flag = True
+                                break
+                        if flag:
+                            break
             else:
-
+                address = locations_column[comments_indices[i]]
+                if type(address) is str:
+                    flag = False
+                    for country in list_of_countries:
+                        for abb in country:
+                            if abb in address:
+                                countries_dict[country[1]]["slightly pos"] += 1
+                                flag = True
+                                break
+                        if flag:
+                            break
         elif comment_mark < 0.00:
             if comment_mark < -0.3:
-
+                address = locations_column[comments_indices[i]]
+                if type(address) is str:
+                    flag = False
+                    for country in list_of_countries:
+                        for abb in country:
+                            if abb in address:
+                                countries_dict[country[1]]["very neg"] += 1
+                                flag = True
+                                break
+                        if flag:
+                            break
             else:
-
+                address = locations_column[comments_indices[i]]
+                if type(address) is str:
+                    flag = False
+                    for country in list_of_countries:
+                        for abb in country:
+                            if abb in address:
+                                countries_dict[country[1]]["slightly neg"] += 1
+                                flag = True
+                                break
+                        if flag:
+                            break
         else:
-
+            address = locations_column[comments_indices[i]]
+            if type(address) is str:
+                flag = False
+                for country in list_of_countries:
+                    for abb in country:
+                        if abb in address:
+                            countries_dict[country[1]]["natural"] += 1
+                            flag = True
+                            break
+                    if flag:
+                        break
         i += 1
+    date = comments_file_name[8:len(comments_file_name) - 4]
+    for key in countries_dict:
+        total = sum(countries_dict[key].values())
+        very_positive_mark = percent(countries_dict[key]["very pos"], total)
+        slightly_positive_mark = percent(countries_dict[key]["slightly pos"], total)
+        slightly_negative_mark = percent(countries_dict[key]["slightly neg"], total)
+        very_negative_mark = percent(countries_dict[key]["very neg"], total)
+        natural_mark = percent(countries_dict[key]["natural"], total)
+        labels = 'Very positive', 'Slightly positive', 'Slightly negative', 'Very negative', 'Natural'
+        sizes = [very_positive_mark, slightly_positive_mark, slightly_negative_mark, very_negative_mark, natural_mark]
+        plt.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True,
+                startangle=90)
+        plt.title("Opinion distribution in " + key + " at " + date)
+        plt.axis('equal')
+        plt.show()
+        plt.clf()
 
 
 
@@ -217,7 +281,7 @@ comments_file_name = "CommentsJan2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 train = getGeneralOpinions(relevant_comments, comments_file_name)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getClassificationsByMl(relevant_comments, comments_file_name, train)
+# getClassificationsByMl(relevant_comments, comments_file_name, train)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
