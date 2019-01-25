@@ -110,7 +110,90 @@ def getGeneralOpinions(relevant_comments, comments_file_name):
     print(train)
     return train
 
-def getLocationBasedOpinions(relevantComments, comments_indices):
+
+def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_name):
+
+    Alabama = ["AL", "Alabama", "alabama"]
+    Alaska = ["AK", "Alaska", "alaska"]
+    Arizona = ["AZ", "Arizona", "arizona"]
+    Arkansas = ["AR", "Arkansas", "arkansas"]
+    California = ["CA", "California", "california"]
+    Colorado = ["CO", "Colorado", "colorado"]
+    Connecticut = ["CT", "Connecticut", "connecticut"]
+    Delaware = ["DE", "Delaware", "delaware"]
+    Florida = ["FL", "Florida", "florida"]
+    Georgia = ["GA", "Georgia", "georgia"]
+    Hawaii = ["HI", "Hawaii", "hawaii"]
+    Idaho = ["ID", "Idaho", "idaho"]
+    Illinois = ["IL", "Illinois", "illinois"]
+    Indiana = ["IN", "Indiana", "indiana"]
+    Iowa = ["IA", "Iowa", "iowa"]
+    Kansas = ["KS", "Kansas", "kansas"]
+    Kentucky = ["KY", "Kentucky", "kentucky"]
+    Louisiana = ["LA", "Louisiana", "louisiana"]
+    Maine = ["ME", "Maine", "maine"]
+    Maryland = ["MD", "Maryland", "maryland"]
+    Massachusetts = ["MA", "Massachusetts", "massachusetts"]
+    Michigan = ["MI", "Michigan", "michigan"]
+    Minnesota = ["MN", "Minnesota", "minnesota"]
+    Mississippi = ["MS", "Mississippi", "mississippi"]
+    Missouri = ["MO", "Missouri", "missouri"]
+    Montana = ["MT", "Montana", "montana"]
+    Nebraska = ["NE", "Nebraska", "nebraska"]
+    Nevada = ["NV", "Nevada", "nevada"]
+    New_Hampshire = ["NH", "New Hampshire", "new hampshire", "New hampshire", "new Hampshire"]
+    New_Jersey = ["NJ", "New Jersey", "new jersey", "new Jersey", "New jersey"]
+    New_Mexico = ["NM", "New Mexico", "new mexico", "new Mexico", "New mexico"]
+    New_York = ["NY", "New York", "new york", "new York", "New york"]
+    North_Carolina = ["NC", "North Carolina", "north carolina", "North carolina", "north Carolina"]
+    North_Dakota = ["ND", "North Dakota", "north dakota", "North dakota", "north Dakota"]
+    Ohio = ["OH", "Ohio", "ohio"]
+    Oklahoma = ["OK", "Oklahoma", "oklahoma"]
+    Oregon = ["OR", "Oregon", "oregon"]
+    Pennsylvania = ["PA", "Pennsylvania", "pennsylvania"]
+    Rhode_Island = ["RI", "Rhode Island", "rhode island", "Rhode island", "rhode Island"]
+    South_Carolina = ["SC", "South Carolina", "south carolina", "South carolina", "south Carolina"]
+    South_Dakota = ["SD", "South Dakota", "south dakota", "South dakota", "south Dakota"]
+    Tennessee = ["TN", "Tennessee", "tennessee"]
+    Texas = ["TX", "Texas", "texas"]
+    Utah = ["UT", "Utah", "utah"]
+    Vermont = ["VT", "Vermont", "vermont"]
+    Virginia = ["VA", "Virginia", "virginia"]
+    Washington = ["WA", "Washington", "washington"]
+    West_Virginia = ["WV", "West Virginia", "West virginia", "west Virginia"]
+    Wisconsin = ["WI", "Wisconsin", "wisconsin"]
+    Wyoming = ["WY", "Wyoming", "wyoming"]
+    list_of_countries = [Alabama, Alaska, Arizona, Arkansas, California, Colorado, Connecticut, Delaware, Florida, Georgia,
+                         Hawaii, Idaho, Illinois, Indiana, Iowa, Kansas, Kentucky, Louisiana, Maine, Maryland, Massachusetts,
+                         Michigan, Minnesota, Mississippi, Missouri, Montana, Nebraska, Nevada, New_Hampshire, New_Jersey,
+                         New_Mexico, New_York, North_Carolina, North_Dakota, Ohio, Oklahoma, Oregon, Pennsylvania, Rhode_Island,
+                         South_Carolina, South_Dakota, Tennessee, Texas, Utah, Vermont, Virginia, Washington, West_Virginia,
+                         Wisconsin, Wyoming]
+    df = pd.read_csv(comments_file_name)
+    locations_column = df.userLocation
+    countries_dict = {}
+    rates_dict = {"very pos":0, "slightly pos":0, "natural":0, "slightly neg":0, "very neg":0}
+    for country in list_of_countries:
+        countries_dict[country] = rates_dict
+    i = 0
+    for comment in relevantComments:
+        analysis = TextBlob(comment)
+        comment_mark = analysis.sentences[0].sentiment.polarity
+        if comment_mark > 0.00:
+            if comment_mark > 0.3:
+                address = locations_column[relevantComments[i]]
+                
+            else:
+
+        elif comment_mark < 0.00:
+            if comment_mark < -0.3:
+
+            else:
+
+        else:
+
+        i += 1
+
 
 
 
@@ -133,7 +216,7 @@ keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 train = getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 getClassificationsByMl(relevant_comments, comments_file_name, train)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
@@ -141,53 +224,53 @@ keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2017
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2017
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MAY 2017
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # JAN 2018
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # FEB 2018
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2018
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2018
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
