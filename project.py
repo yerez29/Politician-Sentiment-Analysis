@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from math import ceil
 from textblob.classifiers import NaiveBayesClassifier
 from copy import deepcopy
+from math import floor
+ENTIRE_MONTH = "Entire Month"
 
 def getArticles(keywords_list, articles_file_name):
     """
@@ -44,11 +46,13 @@ def getComments(keywords_articles_ids, comments_file_name):
             comments_indices.append(i)
     return relevant_comments, comments_indices
 
+
 def percent(part, whole):
 
     return (part/whole) * 100
 
-def getGeneralOpinions(relevant_comments, comments_file_name):
+
+def getGeneralOpinions(relevant_comments, comments_file_name, segment_num):
     """
     :param comments:
     :return:
@@ -101,12 +105,14 @@ def getGeneralOpinions(relevant_comments, comments_file_name):
     labels = 'Very positive', 'Slightly positive', 'Slightly negative', 'Very negative', 'Natural'
     sizes = [very_positive_mark, slightly_positive_mark, slightly_negative_mark, very_negative_mark, natural_mark]
     plt.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
-    plt.title("Opinion distribution in " + date)
+    if segment_num == ENTIRE_MONTH:
+        plt.title("Opinion distribution in " + date)
+    else:
+        plt.title("Opinion distribution in " + segment_num + " part of " + date)
     plt.axis('equal')
     # plt.tight_layout()
     plt.show()
     plt.clf()
-    print(train)
     return train
 
 
@@ -259,6 +265,34 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
         plt.clf()
 
 
+def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name):
+
+    month_division = 6
+    df = pd.read_csv(comments_file_name)
+    comments_dates_column = df.createDate
+    relevant_dates = []
+    num_of_dates = len(relevantComments)
+    date_comment_dic = {}
+    for i in range(num_of_dates):
+        relevant_dates.append(comments_dates_column[comments_indices[i]])
+        date_comment_dic[comments_dates_column[comments_indices[i]]] = relevantComments[i]
+    relevant_dates.sort()
+    sorted_comment_dates = []
+    for date in relevant_dates:
+        sorted_comment_dates.append(date_comment_dic[date])
+    segment_size = floor(num_of_dates / month_division)
+    current_segment_counter = 0
+    segment_num = 1
+    current_comments = []
+    for comment in sorted_comment_dates:
+        if current_segment_counter <= segment_size:
+            current_comments.append(comment)
+            current_segment_counter += 1
+        else:
+            getGeneralOpinions(current_comments, comments_file_name, str(segment_num))
+            current_comments = []
+            current_segment_counter = 0
+            segment_num += 1
 
 
 def getClassificationsByMl(relevant_comments, comments_file_name, train):
@@ -279,62 +313,71 @@ articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-train = getGeneralOpinions(relevant_comments, comments_file_name)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+# train = getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
+# getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # getClassificationsByMl(relevant_comments, comments_file_name, train)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2017
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2017
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MAY 2017
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # JAN 2018
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # FEB 2018
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2018
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2018
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
