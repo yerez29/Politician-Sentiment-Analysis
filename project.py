@@ -307,19 +307,22 @@ def getClassificationsByMl(relevant_comments, comments_file_name, train):
         print("\n")
 
 
-keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
+Trump_keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
+Clinton_keyword_list = ["Clinton", "Hillary", "clinton", "hillary", "HILLARY", "CLINTON", "Hillary Clinton", "hillary clinton", "HILLARY CLINTON", "Hillary clinton", "hillary Clinton", "Hillary Rodham Clinton", "Hillary Diane Rodham Clinton", "Clinton, Hillary Rodham"]
+Obama_keyword_list = ["Obama", "Barack", "obama", "barack", "OBAMA", "BARACK", "Barack Obama", "barack obama", "BARACK OBAMA", "Barack Hussein Obama", "Barack H. Obama", "Barack h. Obama", "Obama, Barack"]
+Sanders_keyword_list = []
 # JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-# train = getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-# getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # getClassificationsByMl(relevant_comments, comments_file_name, train)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -327,7 +330,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2017
 articles_file_name = "ArticlesMarch2017.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -335,7 +338,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2017
 articles_file_name = "ArticlesApril2017.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -343,7 +346,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MAY 2017
 articles_file_name = "ArticlesMay2017.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -351,7 +354,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # JAN 2018
 articles_file_name = "ArticlesJan2018.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -359,7 +362,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # FEB 2018
 articles_file_name = "ArticlesFeb2018.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -367,7 +370,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # MARCH 2018
 articles_file_name = "ArticlesMarch2018.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
@@ -375,7 +378,7 @@ getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
 # APRIL 2018
 articles_file_name = "ArticlesApril2018.csv"
-keywords_articles_ids = getArticles(keywords_list, articles_file_name)
+keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
