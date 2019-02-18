@@ -1,14 +1,26 @@
+# IMPORTS
+
 import csv
 import sys
 import nltk
 import pandas as pd
 from textblob import TextBlob
 import matplotlib.pyplot as plt
-from math import ceil
 from textblob.classifiers import NaiveBayesClassifier
 from copy import deepcopy
 from math import floor
+
+# CONSTS
+
 ENTIRE_MONTH = "Entire Month"
+
+# POLITICIANS
+
+DONALD_TRUMP = "Donald Trump"
+HILLARY_CLINTON = "Hillary Clinton"
+BARACK_OBAMA = "Barack Obama"
+BERNIE_SANDERS = "Bernie Sanders"
+
 
 def getArticles(keywords_list, articles_file_name):
     """
@@ -52,13 +64,11 @@ def percent(part, whole):
     return (part/whole) * 100
 
 
-def getGeneralOpinions(relevant_comments, comments_file_name, segment_num):
+def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, politician):
     """
     :param comments:
     :return:
     """
-    train = []
-    train_counter = 0
     general_mark = 0
     very_positive_mark = 0
     slightly_positive_mark = 0
@@ -66,7 +76,6 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num):
     very_negative_mark = 0
     natural_mark = 0
     num_of_comments = len(relevant_comments)
-    num_of_trains = ceil(num_of_comments / 100)
     date = comments_file_name[8:len(comments_file_name) - 4]
     for comment in relevant_comments:
         analysis = TextBlob(comment)
@@ -75,28 +84,16 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num):
         if cur_average_mark > 0.00:
             if cur_average_mark > 0.3:
                 very_positive_mark += 1
-                if train_counter <= num_of_trains:
-                    train.append((str(analysis.sentences[0]), "very pos"))
             else:
                 slightly_positive_mark += 1
-                if train_counter <= num_of_trains:
-                    train.append((str(analysis.sentences[0]), "slightly pos"))
         elif cur_average_mark < 0.00:
             if cur_average_mark < -0.3:
                 very_negative_mark += 1
-                if train_counter <= num_of_trains:
-                    train.append((str(analysis.sentences[0]), "very neg"))
             else:
                 slightly_negative_mark += 1
-                if train_counter <= num_of_trains:
-                    train.append((str(analysis.sentences[0]), "slightly neg"))
         else:
             natural_mark += 1
-            if train_counter <= num_of_trains:
-                train.append((str(analysis.sentences[0]), "natural"))
-        train_counter += 1
     general_mark /= num_of_comments
-    print("total normalized mark in", date, "is", general_mark)
     very_positive_mark = percent(very_positive_mark, num_of_comments)
     slightly_positive_mark = percent(slightly_positive_mark, num_of_comments)
     slightly_negative_mark = percent(slightly_negative_mark, num_of_comments)
@@ -106,17 +103,17 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num):
     sizes = [very_positive_mark, slightly_positive_mark, slightly_negative_mark, very_negative_mark, natural_mark]
     plt.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
     if segment_num == ENTIRE_MONTH:
-        plt.title("Opinion distribution in " + date)
+        print("total normalized mark in " + date + " of " + politician + " is " + str(general_mark))
+        plt.title("Opinion distribution in " + date + " of " + politician)
     else:
-        plt.title("Opinion distribution in " + segment_num + " part of " + date)
+        plt.title("Opinion distribution in " + segment_num + " part of " + date + " of " + politician)
     plt.axis('equal')
     # plt.tight_layout()
     plt.show()
     plt.clf()
-    return train
 
 
-def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_name):
+def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_name, politician):
 
     Alabama = ["AL", "Alabama", "alabama"]
     Alaska = ["AK", "Alaska", "alaska"]
@@ -259,13 +256,13 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
         sizes = [very_positive_mark, slightly_positive_mark, slightly_negative_mark, very_negative_mark, natural_mark]
         plt.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True,
                 startangle=90)
-        plt.title("Opinion distribution in " + key + " at " + date)
+        plt.title("Opinion distribution in " + key + " at " + date + " of " + politician)
         plt.axis('equal')
         plt.show()
         plt.clf()
 
 
-def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name):
+def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name, politician):
 
     month_division = 6
     df = pd.read_csv(comments_file_name)
@@ -289,13 +286,13 @@ def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name)
             current_comments.append(comment)
             current_segment_counter += 1
         else:
-            getGeneralOpinions(current_comments, comments_file_name, str(segment_num))
+            getGeneralOpinions(current_comments, comments_file_name, str(segment_num), politician)
             current_comments = []
             current_segment_counter = 0
             segment_num += 1
 
 
-def getClassificationsByMl(relevant_comments, comments_file_name, train):
+def getClassificationsByMl(relevant_comments, comments_file_name, train, politician):
 
     cl = NaiveBayesClassifier(train)
     for comment in relevant_comments:
@@ -306,81 +303,316 @@ def getClassificationsByMl(relevant_comments, comments_file_name, train):
         print(analysis.classify())
         print("\n")
 
+# Chosen politicians lists
 
 Trump_keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
 Clinton_keyword_list = ["Clinton", "Hillary", "clinton", "hillary", "HILLARY", "CLINTON", "Hillary Clinton", "hillary clinton", "HILLARY CLINTON", "Hillary clinton", "hillary Clinton", "Hillary Rodham Clinton", "Hillary Diane Rodham Clinton", "Clinton, Hillary Rodham"]
 Obama_keyword_list = ["Obama", "Barack", "obama", "barack", "OBAMA", "BARACK", "Barack Obama", "barack obama", "BARACK OBAMA", "Barack Hussein Obama", "Barack H. Obama", "Barack h. Obama", "Obama, Barack"]
-Sanders_keyword_list = []
+Sanders_keyword_list = ["Sanders", "Bernie", "sanders", "bernie", "SANDERS", "BERNIE", "Bernie Sanders", "Bernie sanders", "bernie Sanders", "bernie sanders", "BERNIE SANDERS", "Bernard Sanders", "Sanders, Bernie", "Sanders, Bernard"]
+
+# DONALD_TRUMP
+
 # JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-# getClassificationsByMl(relevant_comments, comments_file_name, train)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+# getClassificationsByMl(relevant_comments, comments_file_name, train, DONALD_TRUMP)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # MARCH 2017
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # APRIL 2017
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # MAY 2017
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # JAN 2018
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # FEB 2018
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # MARCH 2018
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 # APRIL 2018
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
 relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
-getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH)
-getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name)
-getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
+
+
+# Hillary Clinton
+
+# JAN 2017
+articles_file_name = "ArticlesJan2017.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# getClassificationsByMl(relevant_comments, comments_file_name, train, HILLARY_CLINTON)
+# FEB 2017
+articles_file_name = "ArticlesFeb2017.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# MARCH 2017
+articles_file_name = "ArticlesMarch2017.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# APRIL 2017
+articles_file_name = "ArticlesApril2017.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# MAY 2017
+articles_file_name = "ArticlesMay2017.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsMay2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# JAN 2018
+articles_file_name = "ArticlesJan2018.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# FEB 2018
+articles_file_name = "ArticlesFeb2018.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# MARCH 2018
+articles_file_name = "ArticlesMarch2018.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+# APRIL 2018
+articles_file_name = "ArticlesApril2018.csv"
+keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
+
+
+# BARACK OBAMA
+
+# JAN 2017
+articles_file_name = "ArticlesJan2017.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# getClassificationsByMl(relevant_comments, comments_file_name, train, BARACK_OBAMA)
+# FEB 2017
+articles_file_name = "ArticlesFeb2017.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# MARCH 2017
+articles_file_name = "ArticlesMarch2017.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# APRIL 2017
+articles_file_name = "ArticlesApril2017.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# MAY 2017
+articles_file_name = "ArticlesMay2017.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsMay2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# JAN 2018
+articles_file_name = "ArticlesJan2018.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# FEB 2018
+articles_file_name = "ArticlesFeb2018.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# MARCH 2018
+articles_file_name = "ArticlesMarch2018.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+# APRIL 2018
+articles_file_name = "ArticlesApril2018.csv"
+keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
+
+
+# BERNIE SANDERS
+
+# JAN 2017
+articles_file_name = "ArticlesJan2017.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# getClassificationsByMl(relevant_comments, comments_file_name, train, BERNIE_SANDERS)
+# FEB 2017
+articles_file_name = "ArticlesFeb2017.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# MARCH 2017
+articles_file_name = "ArticlesMarch2017.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# APRIL 2017
+articles_file_name = "ArticlesApril2017.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# MAY 2017
+articles_file_name = "ArticlesMay2017.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsMay2017.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# JAN 2018
+articles_file_name = "ArticlesJan2018.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsJan2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# FEB 2018
+articles_file_name = "ArticlesFeb2018.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsFeb2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# MARCH 2018
+articles_file_name = "ArticlesMarch2018.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsMarch2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+# APRIL 2018
+articles_file_name = "ArticlesApril2018.csv"
+keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
+comments_file_name = "CommentsApril2018.csv"
+relevant_comments, comments_indices = getComments(keywords_articles_ids, comments_file_name)
+getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
+getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
+getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
