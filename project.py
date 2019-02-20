@@ -1,12 +1,8 @@
 # IMPORTS
 
-import csv
-import sys
-import nltk
 import pandas as pd
 from textblob import TextBlob
 import matplotlib.pyplot as plt
-from textblob.classifiers import NaiveBayesClassifier
 from copy import deepcopy
 from math import floor
 
@@ -108,7 +104,6 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
     else:
         plt.title("Opinion distribution in " + segment_num + " part of " + date + " of " + politician)
     plt.axis('equal')
-    # plt.tight_layout()
     plt.show()
     plt.clf()
 
@@ -292,17 +287,6 @@ def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name,
             segment_num += 1
 
 
-def getClassificationsByMl(relevant_comments, comments_file_name, train, politician):
-
-    cl = NaiveBayesClassifier(train)
-    for comment in relevant_comments:
-        blob = TextBlob(comment)
-        analysis = TextBlob(str(blob.sentences[0]), classifier=cl)
-        print(str(blob.sentences[0]))
-        print("\n")
-        print(analysis.classify())
-        print("\n")
-
 # Chosen politicians lists
 
 Trump_keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
@@ -320,7 +304,6 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, DONALD_TRUMP)
-# getClassificationsByMl(relevant_comments, comments_file_name, train, DONALD_TRUMP)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
@@ -397,7 +380,6 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, HILLARY_CLINTON)
-# getClassificationsByMl(relevant_comments, comments_file_name, train, HILLARY_CLINTON)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
@@ -474,7 +456,6 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BARACK_OBAMA)
-# getClassificationsByMl(relevant_comments, comments_file_name, train, BARACK_OBAMA)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
@@ -551,7 +532,6 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(relevant_comments, comments_file_name, ENTIRE_MONTH, BERNIE_SANDERS)
 getLocationBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
 getTimeBasedOpinions(relevant_comments, comments_indices, comments_file_name, BERNIE_SANDERS)
-# getClassificationsByMl(relevant_comments, comments_file_name, train, BERNIE_SANDERS)
 # FEB 2017
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Sanders_keyword_list, articles_file_name)
