@@ -12,8 +12,8 @@ from statistics import mode
 from nltk.tokenize import word_tokenize
 from collections import Counter
 POSITIVE_STARTING_IDX = 799999
-NUMBER_OF_POS_AND_NEG_COMMENTS = 1200
-TRAIN_TEST_RATIO = 0.96
+NUMBER_OF_POS_AND_NEG_COMMENTS = 15000
+TRAIN_TEST_RATIO = 0.8
 POS = "pos"
 NEG = "neg"
 TAG_SIGN = "@"
@@ -41,11 +41,11 @@ class VoteClassifier(ClassifierI):
         return conf
 
 
-df = pd.read_csv("trainData.csv", encoding = "latin")
+df = pd.read_csv("trainData.csv", encoding="latin")
 col_name = df.columns[0]
-df=df.rename(columns = {col_name:'target'})
+df=df.rename(columns={col_name:'target'})
 col_name = df.columns[5]
-df=df.rename(columns = {col_name:'text'})
+df=df.rename(columns={col_name:'text'})
 target_column = df.target
 text_column = df.text
 allWordsList = []
@@ -77,7 +77,7 @@ save_documents = open("documents.pickle", "wb")
 pickle.dump(commentsAndTags, save_documents)
 save_documents.close()
 c = Counter(allWordsList)
-topWordsList = c.most_common(5000)
+topWordsList = c.most_common(10000)
 word_features = [i[0] for i in topWordsList]
 
 save_word_features = open("word_features5k.pickle", "wb")
@@ -142,36 +142,3 @@ print("LinearSVC_classifier accuracy percent:",
 save_classifier = open("LinearSVC_classifier5k.pickle", "wb")
 pickle.dump(LinearSVC_classifier, save_classifier)
 save_classifier.close()
-
-
-# SGDC_classifier = SklearnClassifier(SGDClassifier())
-# SGDC_classifier.train(training_set)
-# print("SGDClassifier accuracy percent:",
-#       nltk.classify.util.accuracy(SGDC_classifier, testing_set) * 100)
-#
-# save_classifier = open("SGDC_classifier5k.pickle", "wb")
-# pickle.dump(SGDC_classifier, save_classifier)
-# save_classifier.close()
-#
-#
-# RandomForest_classifier = SklearnClassifier(RandomForestClassifier())
-# RandomForest_classifier.train(training_set)
-# print("RFclassifier accuracy percent:",
-#       nltk.classify.util.accuracy(RandomForest_classifier, testing_set) * 100)
-#
-# save_classifier = open("RF_classifier5k.pickle", "wb")
-# pickle.dump(RandomForest_classifier, save_classifier)
-# save_classifier.close()
-
-###############################################################################
-
-voted_classifier = VoteClassifier(classifier, LinearSVC_classifier, MNB_classifier, BernoulliNB_classifier, LogisticRegression_classifier)
-
-
-def sentiment(text):
-    feats = find_features(text)
-    return voted_classifier.classify(feats),voted_classifier.confidence(feats)
-
-print(sentiment('I enjoyed walking in the park'))
-print(sentiment('i was afraid to be alone'))
-print(sentiment("dingo is smart."))

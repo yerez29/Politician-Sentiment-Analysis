@@ -148,8 +148,9 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
     negative_mark = 0
     natural_mark = 0
     num_of_comments = len(relevant_comments)
+    # print(num_of_comments)
     date = comments_file_name[8:len(comments_file_name) - 4]
-    i = 0
+    # i = 0
     for comment in relevant_comments:
         analysis = sentiment(comment)
         confidence_mark = analysis[1]
@@ -160,9 +161,9 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
                 negative_mark += 1
         else:
             natural_mark += 1
-        print(analysis[0])
-        print(i)
-        i += 1
+        # print(analysis[0], confidence_mark)
+        # print(i)
+        # i += 1
     positive_mark = percent(positive_mark, num_of_comments)
     negative_mark = percent(negative_mark, num_of_comments)
     natural_mark = percent(natural_mark, num_of_comments)
