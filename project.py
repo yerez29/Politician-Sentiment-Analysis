@@ -57,6 +57,8 @@ def getComments(keywords_articles_ids, comments_file_name):
 
 def percent(part, whole):
 
+    if whole == 0:
+        return 0
     return (part/whole) * 100
 
 
