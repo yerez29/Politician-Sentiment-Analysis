@@ -1,12 +1,22 @@
+# This program requires 64-bit python version and at least 16GB of ram to run.
+# To make the classifiers available in weaker computers, they will be created by a strong one and will be saved in
+# the ".pickle" files.
+# No need to run this program as it takes large amount of time.
+# Just make sure that ".pickle" files of all classifiers and word features will be located in "MlRunning.py" directory
+# before you run it.
+
+
+# For running this file make sure trainData.csv tagged dataset is in your working directory.
+
+
 import nltk
 import pandas as pd
 from random import shuffle
 from nltk.classify import SklearnClassifier
 import pickle
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.svm import LinearSVC, SVC
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from nltk.classify import ClassifierI
 from statistics import mode
 from nltk.tokenize import word_tokenize
@@ -43,9 +53,9 @@ class VoteClassifier(ClassifierI):
 
 df = pd.read_csv("trainData.csv", encoding="latin")
 col_name = df.columns[0]
-df=df.rename(columns={col_name:'target'})
+df = df.rename(columns={col_name: 'target'})
 col_name = df.columns[5]
-df=df.rename(columns={col_name:'text'})
+df = df.rename(columns={col_name: 'text'})
 target_column = df.target
 text_column = df.text
 allWordsList = []
