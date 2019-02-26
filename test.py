@@ -1,0 +1,1 @@
+print("Netanyahu, Benjamin" == "Netanyahu, Benjamin")
