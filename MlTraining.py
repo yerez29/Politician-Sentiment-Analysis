@@ -2,9 +2,8 @@
 # To make the classifiers available in weaker computers, they will be created by a strong one and will be saved in
 # the ".pickle" files.
 # No need to run this program as it takes large amount of time.
-# Just make sure that ".pickle" files of all classifiers and word features will be located in "MlRunning.py" directory
+# Just make sure that ".pickle" files of all classifiers and word features will be located in "Ml_Sentiment.py" directory
 # before you run it.
-
 
 # For running this file make sure trainData.csv tagged dataset is in your working directory.
 
@@ -107,6 +106,7 @@ featureSets = [(find_features(comm), tag) for (comm, tag) in commentsAndTags]
 shuffle(featureSets)
 testing_set = featureSets[int(TRAIN_TEST_RATIO*(NUMBER_OF_POS_AND_NEG_COMMENTS * 2)):]
 training_set = featureSets[:int(TRAIN_TEST_RATIO*(NUMBER_OF_POS_AND_NEG_COMMENTS * 2))]
+
 classifier = nltk.classify.NaiveBayesClassifier.train(training_set)
 print("Original Naive Bayes Algo accuracy percent:",
       (nltk.classify.util.accuracy(classifier, testing_set)) * 100)
