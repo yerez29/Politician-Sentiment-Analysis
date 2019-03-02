@@ -1,1 +1,1 @@
-print("Netanyahu, Benjamin" == "Netanyahu, Benjamin")
+print("commentsTags" == "commentsTags")

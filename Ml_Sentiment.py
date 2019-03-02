@@ -1,3 +1,14 @@
+"""
+This file is part of A Needle in a Data Haystack (course 67978) Project, group 20.
+Made by: Yair Erez, Orel Keliahu and Batel Luzon.
+This file contain code for Machine Learning analysis of nyt readers comments and results presentations in order to build
+politicians popularity measurements.
+NOTE: TO RUN THIS CODE ALL NEW YORK TIMES DATA FILES AND ALL ".PICKLE" FILES (CREATED BY "MlTraining.py" FILE) NEED TO
+BE LOCATED IN WORKING DIRECTORY.
+"""
+
+# IMPORTS
+
 import pickle
 import pandas as pd
 from nltk.classify import ClassifierI
@@ -10,7 +21,7 @@ from random import shuffle
 from tabulate import tabulate
 POS = "pos"
 NEG = "neg"
-NUM_OF_COMMENTS = 8000
+NUM_OF_COMMENTS = 6000
 CONFIDENCE_RATIO = 0.8
 
 # CONSTS
@@ -25,86 +36,106 @@ BARACK_OBAMA = "Barack Obama"
 BENJAMIN_NETANYAHU = "Benjamin Netanyahu"
 
 
-class VoteClassifier(ClassifierI):
+class votingClassifier(ClassifierI):
     def __init__(self, *classifiers):
+        """
+        Class constructor. Input is a list of classifiers of different kind.
+        :param classifiers:
+        """
         self._classifiers = classifiers
 
-    def classify(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-        return mode(votes)
+    def classify(self, current_features):
+        """
+        Classification method.
+        :param current_features: features to classify with.
+        :return: a positive or negative text classification.
+        """
+        classifiers_votes = []
+        for current_classifier in self._classifiers:
+            current_vote = current_classifier.classify(current_features)
+            classifiers_votes.append(current_vote)
+        return mode(classifiers_votes)
 
-    def confidence(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-
-        choice_votes = votes.count(mode(votes))
-        conf = choice_votes / len(votes)
-        return conf
-
-
-documents_f = open("documents.pickle", "rb")
-documents = pickle.load(documents_f)
-documents_f.close()
-
-
-word_features5k_f = open("word_features5k.pickle", "rb")
-word_features = pickle.load(word_features5k_f)
-word_features5k_f.close()
+    def confidence(self, current_features):
+        """
+        return the confidence of the classification, which is the rate of classifiers that agreed on current classification.
+        :param current_features: features to classify with.
+        :return: the confidence of the current classification.
+        """
+        current_votes = []
+        for current_classifier in self._classifiers:
+            current_vote = current_classifier.classify(current_features)
+            current_votes.append(current_vote)
+        current_chosen_votes = current_votes.count(mode(current_votes))
+        current_confidence = current_chosen_votes / len(current_votes)
+        return current_confidence
 
 
-def find_features(comment):
+# loading current comments and tags
+comments_and_tags_file = open("commentsTags.pickle", "rb")
+current_comment_and_tags = pickle.load(comments_and_tags_file)
+comments_and_tags_file.close()
 
+# loading word features
+features_words_file = open("featuresWords.pickle", "rb")
+features_words = pickle.load(features_words_file)
+features_words_file.close()
+
+
+def featuresSearch(comment):
+    """
+    This function returns a dictionary as features of current comment.
+    :param comment: current comment to get features from.
+    :return: a dictionary with keys and values as features.
+    """
     commentWords = word_tokenize(comment)
     featuresDic = {}
-    for w in word_features:
-        featuresDic[w] = w in commentWords
+    for word in features_words:
+        featuresDic[word] = word in commentWords
     return featuresDic
 
 
-open_file = open("originalnaivebayes5k.pickle", "rb")
-classifier = pickle.load(open_file)
-open_file.close()
+# load Naive Bayes classifier
+current_file = open("naiveBayes.pickle", "rb")
+classifier = pickle.load(current_file)
+current_file.close()
+
+# load Multinomial Naive Bayes classifier
+current_file = open("multiNaiveBayes.pickle", "rb")
+MNB_classifier = pickle.load(current_file)
+current_file.close()
+
+# load Bernoulli Naive Bayes classifier
+current_file = open("bernoulliNaiveBayes.pickle", "rb")
+BernoulliNB_classifier = pickle.load(current_file)
+current_file.close()
+
+# load Logistic Regression classifier
+current_file = open("logisticRegression.pickle", "rb")
+LogisticRegression_classifier = pickle.load(current_file)
+current_file.close()
+
+# load Linear Support Vector classifier
+current_file = open("linearSv.pickle", "rb")
+LinearSVC_classifier = pickle.load(current_file)
+current_file.close()
+
+voting_module = votingClassifier(classifier, LinearSVC_classifier, MNB_classifier, BernoulliNB_classifier, LogisticRegression_classifier)
 
 
-open_file = open("MNB_classifier5k.pickle", "rb")
-MNB_classifier = pickle.load(open_file)
-open_file.close()
+def getCurrentSentiment(text):
 
-
-open_file = open("BernoulliNB_classifier5k.pickle", "rb")
-BernoulliNB_classifier = pickle.load(open_file)
-open_file.close()
-
-
-open_file = open("LogisticRegression_classifier5k.pickle", "rb")
-LogisticRegression_classifier = pickle.load(open_file)
-open_file.close()
-
-
-open_file = open("LinearSVC_classifier5k.pickle", "rb")
-LinearSVC_classifier = pickle.load(open_file)
-open_file.close()
-
-voted_classifier = VoteClassifier(classifier, LinearSVC_classifier, MNB_classifier, BernoulliNB_classifier, LogisticRegression_classifier)
-
-
-def sentiment(text):
-    feats = find_features(text)
-    return voted_classifier.classify(feats), voted_classifier.confidence(feats)
+    calculated_features = featuresSearch(text)
+    return voting_module.classify(calculated_features), voting_module.confidence(calculated_features)
 
 
 def getArticles(keywords_list, articles_file_name):
     """
-    :param wordLst:
-    :param csv_file:
-    :return:
+    This function retrieves the ids of articles related to chosen politician.
+    :param keywords_list: list of tags related to chosen politician.
+    :param articles_file_name: articles file name.
+    :return: a list with relevant article ids.
     """
-
     relevant_articles_ids = []
     df = pd.read_csv(articles_file_name)
     keyword_column = df.keywords
@@ -119,8 +150,10 @@ def getArticles(keywords_list, articles_file_name):
 
 def getComments(keywords_articles_ids, comments_file_name):
     """
-    :param articlsId:
-    :return:
+    This function returns 2 lists with nyt's readers comments and comments indices related to chosen politician.
+    :param keywords_articles_ids: ids of relevant articles.
+    :param comments_file_name: comment file name.
+    :return: relevant comments and their indices within the file.
     """
     relevant_comments = []
     comments_indices = []
@@ -136,7 +169,12 @@ def getComments(keywords_articles_ids, comments_file_name):
 
 
 def percent(part, whole):
-
+    """
+        A simple function for percent calculations.
+        :param part: partial number.
+        :param whole: whole number.
+        :return: calculated percentage.
+    """
     if whole == 0:
         return 0
     return (part/whole) * 100
@@ -144,20 +182,25 @@ def percent(part, whole):
 
 def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, politician):
     """
-    :param comments:
-    :return:
+    This function calculates and presents the distribution of comments positive, natural and negative sentiments
+    within an entire month.
+    :param relevant_comments: a list of nyt readers comments.
+    :param comments_file_name: a comments file name.
+    :param segment_num: an indicator for entire/partial month portion.
+    :param politician: the name of politician to analyze.
+    :return: no return for this function.
     """
     positive_mark = 0
     negative_mark = 0
     natural_mark = 0
-    shuffle(relevant_comments)
+    shuffle(relevant_comments)  # shuffle the list to get random independent comments
     date = comments_file_name[8:len(comments_file_name) - 4]
     stop = 0
     numOfComments = len(relevant_comments)
-    for comment in relevant_comments:
-        analysis = sentiment(comment)
+    for comment in relevant_comments:  # iterating relevant comments
+        analysis = getCurrentSentiment(comment) # extract comment sentiment
         confidence_mark = analysis[1]
-        if confidence_mark >= CONFIDENCE_RATIO:
+        if confidence_mark >= CONFIDENCE_RATIO:  # classify the comment according to sentiment and confidence
             if analysis[0] == POS:
                 positive_mark += 1
             elif analysis[0] == NEG:
@@ -165,8 +208,9 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
         else:
             natural_mark += 1
         stop += 1
-        if stop > NUM_OF_COMMENTS - 1:
+        if stop > NUM_OF_COMMENTS - 1:  # break the loop if reached maximum number of comments
             break
+    # calculate sentiment distribution
     if numOfComments > NUM_OF_COMMENTS:
         positive_mark = percent(positive_mark, NUM_OF_COMMENTS)
         negative_mark = percent(negative_mark, NUM_OF_COMMENTS)
@@ -175,6 +219,7 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
         positive_mark = percent(positive_mark, numOfComments)
         negative_mark = percent(negative_mark, numOfComments)
         natural_mark = percent(natural_mark, numOfComments)
+    # present the results in pie chart form
     labels = 'Positive', 'Negative', 'Natural'
     sizes = [positive_mark, negative_mark, natural_mark]
     plt.pie(sizes, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
@@ -188,7 +233,16 @@ def getGeneralOpinions(relevant_comments, comments_file_name, segment_num, polit
 
 
 def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_name, politician):
-
+    """
+        This function calculates and presents the distribution of comments positive, natural and negative sentiments
+        within an entire month based on geographical location of comments writer.
+        :param relevantComments: a list of nyt readers relevant comments to chosen politician.
+        :param comments_indices: a list of indices within the file of nyt readers relevant comments to chosen politician.
+        :param comments_file_name: comments file name.
+        :param politician: the name of politician to analyze.
+        :return: no return for this function.
+    """
+    # create list of us countries and their abbreviations as appear in nyt readers comment file.
     Alabama = ["AL", "Alabama", "alabama"]
     Alaska = ["AK", "Alaska", "alaska"]
     Arizona = ["AZ", "Arizona", "arizona"]
@@ -248,19 +302,20 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
     df = pd.read_csv(comments_file_name)
     locations_column = df.userLocation
     countries_dict = {}
+    # build and assign counting dictionary to each state
     rates_dict = {"pos": 0, "natural": 0, "neg": 0}
     for country in list_of_countries:
         countries_dict[country[1]] = deepcopy(rates_dict)
     i = 0
-    shuffle(relevantComments)
-    for comment in relevantComments:
-        analysis = sentiment(comment)
-        if analysis[1] >= CONFIDENCE_RATIO:
-            if analysis[0] == POS:
+    shuffle(relevantComments)  # shuffle the list to get random independent comments
+    for comment in relevantComments:  # iterating comments
+        analysis = getCurrentSentiment(comment)  # extract sentiment and confidence
+        if analysis[1] >= CONFIDENCE_RATIO:  # check confidence ratio for atleast 80 percent classification agreement
+            if analysis[0] == POS:  # check sentiment value for positive
                 address = locations_column[comments_indices[i]]
                 if type(address) is str:
                     flag = False
-                    for country in list_of_countries:
+                    for country in list_of_countries:  # find the relevant state and add 1 to appropriate value
                         for abb in country:
                             if abb in address:
                                 countries_dict[country[1]]["pos"] += 1
@@ -268,11 +323,11 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
                                 break
                         if flag:
                             break
-            elif analysis[0] == NEG:
+            elif analysis[0] == NEG:  # check sentiment value for negative
                 address = locations_column[comments_indices[i]]
                 if type(address) is str:
                     flag = False
-                    for country in list_of_countries:
+                    for country in list_of_countries:  # find the relevant state and add 1 to appropriate value
                         for abb in country:
                             if abb in address:
                                 countries_dict[country[1]]["neg"] += 1
@@ -280,11 +335,11 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
                                 break
                         if flag:
                             break
-        else:
+        else:  # less than 80 percent classification agreement - classify as natural
             address = locations_column[comments_indices[i]]
             if type(address) is str:
                 flag = False
-                for country in list_of_countries:
+                for country in list_of_countries:  # find the relevant state and add 1 to appropriate value
                     for abb in country:
                         if abb in address:
                             countries_dict[country[1]]["natural"] += 1
@@ -293,9 +348,10 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
                     if flag:
                         break
         i += 1
-        if i >= NUM_OF_COMMENTS:
+        if i >= NUM_OF_COMMENTS:  # break the loop if reached maximum number of comments
             break
     date = comments_file_name[8:len(comments_file_name) - 4]
+    # calculate sentiment distribuation for each state
     headers = ["State", "Positive(%)", "Negative(%)", "Natural(%)"]
     statesRates = []
     for key in countries_dict:
@@ -304,12 +360,22 @@ def getLocationBasedOpinions(relevantComments, comments_indices, comments_file_n
         negative_mark = percent(countries_dict[key]["neg"], total)
         natural_mark = percent(countries_dict[key]["natural"], total)
         statesRates.append((key, positive_mark, negative_mark, natural_mark))
+    # print the results in tabular form
     print("Opinion distribution by state at " + date + " of " + politician + ":")
     print(tabulate(statesRates, headers=headers, tablefmt="grid"))
 
 
 def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name, politician):
-
+    """
+        This function calculates and present the results of sentiment distribution within each third of a month,
+        each third is usually composed from 10 days.
+        :param relevantComments: a list of nyt readers relevant comments to chosen politician.
+        :param comments_indices: a list of indices within the file of nyt readers relevant comments to chosen politician.
+        :param comments_file_name: comment file name.
+        :param politician: the name of politician to analyze.
+        :return: no return for this function.
+    """
+    # create a list of comments sorted by their chronological writing dates
     month_division = 4
     df = pd.read_csv(comments_file_name)
     comments_dates_column = df.createDate
@@ -327,27 +393,27 @@ def getTimeBasedOpinions(relevantComments, comments_indices, comments_file_name,
     current_segment_counter = 0
     segment_num = 1
     current_comments = []
+    # iterate sorted comments
     for comment in sorted_comment_dates:
-        if current_segment_counter <= segment_size:
+        if current_segment_counter <= segment_size:  # append comment to current third
             current_comments.append(comment)
             current_segment_counter += 1
-        else:
+        else:  # send current comments third to general comments function with current month third indicator
             getGeneralOpinions(current_comments, comments_file_name, str(segment_num), politician)
             current_comments = []
             current_segment_counter = 0
             segment_num += 1
 
 
-# Chosen politicians lists
+# Chosen politicians nyt tags lists
 
 Trump_keywords_list = ["Trump", 'Donald', "trump", "donald", "TRUMP", "DONALD", "Trump, Donald J", "Donald Trump", "Donald John Trump", "Donald J. Trump"]
 Clinton_keyword_list = ["Clinton", "Hillary", "clinton", "hillary", "HILLARY", "CLINTON", "Hillary Clinton", "hillary clinton", "HILLARY CLINTON", "Hillary clinton", "hillary Clinton", "Hillary Rodham Clinton", "Hillary Diane Rodham Clinton", "Clinton, Hillary Rodham"]
 Obama_keyword_list = ["Obama", "Barack", "obama", "barack", "OBAMA", "BARACK", "Barack Obama", "barack obama", "BARACK OBAMA", "Barack Hussein Obama", "Barack H. Obama", "Barack h. Obama", "Obama, Barack"]
 Netanyahu_keyword_list = ["Netanyahu", "Benjamin", "netanyahu", "benjamin", "NETANYAHU", "BENJAMIN", "Benjamin Netanyahu", "Benjamin netanyahu", "benjamin Netanyahu", "benjamin netanyahu", "BENJAMIN NETANYAHU", "Netanyahu, Benjamin", "Bibi netanyahu", "bibi netanyahu", "Bibi Netanyahu", "bibi Netanyahu"]
 
-# DONALD_TRUMP
+# Donald Trump machine learning based analysis for January 2017
 
-# JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
@@ -355,7 +421,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# FEB 2017
+
+# Donald Trump machine learning based analysis for February 2017
+
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
@@ -363,7 +431,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# MARCH 2017
+
+# Donald Trump machine learning based analysis for March 2017
+
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
@@ -371,7 +441,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# APRIL 2017
+
+# Donald Trump machine learning based analysis for April 2017
+
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
@@ -379,7 +451,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# MAY 2017
+
+# Donald Trump machine learning based analysis for May 2017
+
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
@@ -387,7 +461,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# JAN 2018
+
+# Donald Trump machine learning based analysis for January 2018
+
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
@@ -395,7 +471,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# FEB 2018
+
+# Donald Trump machine learning based analysis for February 2018
+
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
@@ -403,7 +481,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# MARCH 2018
+
+# Donald Trump machine learning based analysis for March 2018
+
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
@@ -411,7 +491,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, DONALD_TRUMP)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
-# APRIL 2018
+
+# Donald Trump machine learning based analysis for April 2018
+
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(Trump_keywords_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
@@ -420,10 +502,8 @@ getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, DONALD_TRUMP)
 
+# Hillary Clinton machine learning based analysis for January 2017
 
-# Hillary Clinton
-
-# JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
@@ -431,7 +511,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# FEB 2017
+
+# Hillary Clinton machine learning based analysis for February 2017
+
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
@@ -439,7 +521,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# MARCH 2017
+
+# Hillary Clinton machine learning based analysis for March 2017
+
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
@@ -447,7 +531,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# APRIL 2017
+
+# Hillary Clinton machine learning based analysis for April 2017
+
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
@@ -455,7 +541,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# MAY 2017
+
+# Hillary Clinton machine learning based analysis for May2017
+
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
@@ -463,7 +551,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# JAN 2018
+
+# Hillary Clinton machine learning based analysis for January 2018
+
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
@@ -471,7 +561,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# FEB 2018
+
+# Hillary Clinton machine learning based analysis for February 2018
+
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
@@ -479,7 +571,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# MARCH 2018
+
+# Hillary Clinton machine learning based analysis for March 2018
+
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
@@ -487,7 +581,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, HILLARY_CLINTON)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
-# APRIL 2018
+
+# Hillary Clinton machine learning based analysis for April 2018
+
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(Clinton_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
@@ -496,10 +592,8 @@ getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, HILLARY_CLINTON)
 
+# Barack Obama machine learning based analysis for January 2017
 
-# BARACK OBAMA
-
-# JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
@@ -507,7 +601,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# FEB 2017
+
+# Barack Obama machine learning based analysis for February 2017
+
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
@@ -515,7 +611,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# MARCH 2017
+
+# Barack Obama machine learning based analysis for March 2017
+
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
@@ -523,7 +621,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# APRIL 2017
+
+# Barack Obama machine learning based analysis for April 2017
+
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
@@ -531,7 +631,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# MAY 2017
+
+# Barack Obama machine learning based analysis for May 2017
+
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
@@ -539,7 +641,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# JAN 2018
+
+# Barack Obama machine learning based analysis for January 2018
+
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
@@ -547,7 +651,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# FEB 2018
+
+# Barack Obama machine learning based analysis for February 2018
+
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
@@ -555,7 +661,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# MARCH 2018
+
+# Barack Obama machine learning based analysis for March 2018
+
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
@@ -563,7 +671,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BARACK_OBAMA)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
-# APRIL 2018
+
+# Barack Obama machine learning based analysis for April 2018
+
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(Obama_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
@@ -572,10 +682,8 @@ getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BARACK_OBAMA)
 
+# Benjamin Netanyahu machine learning based analysis for January 2017
 
-# BENJAMIN NETANYAHU
-
-# JAN 2017
 articles_file_name = "ArticlesJan2017.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2017.csv"
@@ -583,7 +691,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# FEB 2017
+
+# Benjamin Netanyahu machine learning based analysis for February 2017
+
 articles_file_name = "ArticlesFeb2017.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2017.csv"
@@ -591,7 +701,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# MARCH 2017
+
+# Benjamin Netanyahu machine learning based analysis for March 2017
+
 articles_file_name = "ArticlesMarch2017.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2017.csv"
@@ -599,7 +711,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# APRIL 2017
+
+# Benjamin Netanyahu machine learning based analysis for April 2017
+
 articles_file_name = "ArticlesApril2017.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2017.csv"
@@ -607,7 +721,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# MAY 2017
+
+# Benjamin Netanyahu machine learning based analysis for May 2017
+
 articles_file_name = "ArticlesMay2017.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsMay2017.csv"
@@ -615,7 +731,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# JAN 2018
+
+# Benjamin Netanyahu machine learning based analysis for January 2018
+
 articles_file_name = "ArticlesJan2018.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsJan2018.csv"
@@ -623,7 +741,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# FEB 2018
+
+# Benjamin Netanyahu machine learning based analysis for February 2018
+
 articles_file_name = "ArticlesFeb2018.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsFeb2018.csv"
@@ -631,7 +751,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# MARCH 2018
+
+# Benjamin Netanyahu machine learning based analysis for March 2018
+
 articles_file_name = "ArticlesMarch2018.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsMarch2018.csv"
@@ -639,7 +761,9 @@ relevant_comments, comments_indices = getComments(keywords_articles_ids, comment
 getGeneralOpinions(deepcopy(relevant_comments), comments_file_name, ENTIRE_MONTH, BENJAMIN_NETANYAHU)
 getLocationBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
 getTimeBasedOpinions(deepcopy(relevant_comments), comments_indices, comments_file_name, BENJAMIN_NETANYAHU)
-# APRIL 2018
+
+# Benjamin Netanyahu machine learning based analysis for April 2018
+
 articles_file_name = "ArticlesApril2018.csv"
 keywords_articles_ids = getArticles(Netanyahu_keyword_list, articles_file_name)
 comments_file_name = "CommentsApril2018.csv"
