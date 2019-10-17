@@ -1,4 +1,8 @@
-﻿Introduction and problem description:
+﻿Building a Popularity Index of Politicians through Twitter Tweets Analysis
+
+
+
+Introduction and problem description:
 
 Over the past few years, opinion polls have been an ever-increasing field of politicians who want to know public opinion about them through receiving feedback, which can help them improve their functioning, because of their desire to please the public at large and their constituency in particular. For this reason, such surveys have become extremely popular in general and especially during election periods. Such opinion polls are usually based on traditional methods such as telephone interviews, face-to-face interviews, street surveys, self-filling questionnaires in the mail, etc. The advancement of technology over the last decade has created new sources from which to obtain particularly large amounts of opinions on political and current issues, from sources such as social networks, news sites and blogs, the amount of data that can be extracted is infinitely greater than traditional methods.
 Entering the Big Data era has brought with it a variety of methods for dealing with and analyzing such large amounts of information, from which insights and conclusions can be drawn, such as public opinion trends and public opinion on political issues. These include reviews of news and current events involving politicians on a daily basis, which may vary according to their functioning and influence the popularity they gain in the public.
@@ -23,7 +27,7 @@ As mentioned in the introduction, in this project we will analyze user responses
 First of all, we extracted from Dataset # 1 all the articles related to the politicians we would like to analyze, which deal with the events they are involved in which have political influence. Each entry representing an article has a field containing indicative tags associated with the article. If the article deals with or is related to a particular politician or the events he is involved in, the name will be included in the article's tagline. We will build such a tag list for every politician and scan all records in the data files for articles containing tags related to it. If an article contains one of the tags, we will save the identifying number for that article. In this way, we will keep all the identifying numbers of articles published in a particular month related to the politician of our choice.
 Then, we will extract the user's responses to relevant articles for the politician, using the identifying numbers we have saved, and then scan the comment files in Dataset # 2. Each record representing a comment has a field with a unique identifier representing its article. By listing the IDs we have saved, we will collect all user responses to articles whose ID was in the ID list. In this way, we will gather all of the user comments to articles related to the elected politician.
 In order to create a time-varying popularity index, for each politician, the following metrics for each method (lexicon or ML) were calculated separately:
-1. General Monthly Popularity Index by analyzing the responses collected on a particular politician over a full month period (months are January-May 2017 as well as January-April 2018). This is done through a serial pass on the reactions related to the elected politician who was received from the process described earlier. For each such response, we will classify the emotion expressed therein according to one of the classification methods we will elaborate on later. In the lexicon-based method the classification moves on a scale of values of very positive emotion, slightly positive, neutral, slightly negative or very negative. In the ML based classification the emotion moves on a positive, neutral and negative value scale. At the end of the calculations, the distribution of opinions for that month is calculated and displayed as a pie chart.
+1. General Monthly Popularity Index by analyzing the responses collected on a particular politician over a full month period (months are January-May 2017 as well as January-April 2018). This is done through a serial pass on the reactions related to the elected politician who was received from the process described earlier. For each such response, we will classify the emotion expressed therein according to one of the classification methods we will elaborate on later. In the lexicon-based method the classification moves on a scale of values of very positive emotion, slightly positive, neutral, slightly negative or very negative. In the ML based classification, the emotion moves on a positive, neutral and negative value scale. At the end of the calculations, the distribution of opinions for that month is calculated and displayed as a pie chart.
 
 2. Monthly Popularity Index of a particular politician by country affiliation. Here, too, the classification is done separately for each response for the two approaches mentioned. For each relevant response from the response list, the emotion expressed in it will be categorized similar to the general monthly index, but the state from which the response writer comes will be taken into account, based on the position field in the response file record. Thus, the distribution of emotions expressed in responses according to affiliation to the United States is calculated and the results are presented in a table describing the distribution of opinions in each country as a percentage.
 
@@ -40,7 +44,7 @@ The training phase: The training phase is classified. To do this, we must use a 
 
 3. Sentiment Extraction - Define 5 different classifiers that will use supervised learning for the Training Data we created. We will use numeric scikit-learn classifiers and are: Naive Bayes, Multinomial Naive Bayes, Bernoulli Naive Bayes, Logistic Regression and Linear Support Vector. Trust each of them to the Training Data and then save them as quick reusable pickle files without the need for repetition each time, a fact that will save a lot of time when we run them for comment from the New York Times.
 Testing Step: Now we will apply each of the five classifiers we built on the Testing Data to calculate the accuracy of each classifier. In this metric, calculate the percentages that Justice classified from all the ground truths of the responses in the Testing Set:
-Testing Data Accuracy (%) Classifier
+Testing Data Accuracy (%) vs Classifier
 78.45 Naive Bayes
 79.11 Multinomial Naive Bayes
 79.23 Bernoulli Naïve Bayes
@@ -81,4 +85,95 @@ Distribution of emotions in the second trimester of February 2018 for Barack Oba
 
 
 
+Distribution of Emotions in February 2018 Responses for Benjamin Netanyahu: Right Classification of Lexicon and Left ML Classification. Below are results for comparison from the US GALLUP Research Institute this month (February 2018 on the far right):
 
+
+
+
+Distribution of emotions in the first trimester of March 2018 for Donald Trump: right lexicon classification and left ML classification. Below are the results from Wikipedia of two US research institutes this month:
+
+
+
+
+
+
+As can be seen, compared to results obtained from institutional research institute studies, the results of emotion analysis based on ML data are closer to reality than the results of the lexicon-based analysis. This is reflected in the gap of individual percentages (up to a maximum of 10 percent in each measure of positive, neutral, or negative emotion) in ML-based analysis and up to several tens of gaps in lexicon-based analysis. We also note that both methods better classify positive responses than negative responses, in most cases the index expressing positive emotion closer than the index expressing negative emotion to the results of the research institutes. We will try to explain the meaning of these results:
+1. Lexicon-based classification gives a direct result from syntactic analysis of the sentence. He does not try to determine whether the sentence contains any positive or negative meaning since he works with adjectives and not with his general structure. This means that it checks whether the adjective alone is in a negative or positive context. This may be a problem in cases where there is negation in the trial. For example, the statement "not the best" will have a polarity of about 1 and opposite the "the not best" will contain a polarity value of 0.5.
+2. A textblob-based lexicon classification that we used uses a general English-language dictionary that is not tailored to politics-specific text domain. The classifieds' training was conducted on a data-based response to political events taken from Twitter.
+3. The amount of features in ML that we used (10,000) is greater than the amount of English textblob lexicon adjectives estimated at slightly less than 3,000. Therefore, after training, the classified "recognized" a greater number of words (including adjectives) that do not appear in the lexicon. The English textblob lexicon can be found at: https://github.com/sloria/TextBlob/blob/eb08c120d364e908646731d60b4e4c6c1712ff63/textblob/en/en-sentiment.xml
+4. Unlike the lexicon, the various ML classifiers do indeed try to test whether the sentence contains a positive or negative meaning as a whole and does not work against adjectives alone.
+5. The use of a five-class voting system model that we used in ML-based classification is an improvement to the general classification algorithm over using only one classifier.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Visualization:
+
+Now we visualize the results we got, show it, and then explain our selection:
+
+Results of the time-varying popularity index for Donald Trump using lexicon-based analysis:
+
+
+Results of the time-varying popularity index for Donald Trump using ML-based analysis:
+
+
+
+Results of the time-varying popularity index for Hillary Clinton using lexicon-based analysis:
+
+
+
+Results of the time-varying popularity index for Hillary Clinton using ML-based analysis:
+
+
+Results of the time-varying popularity index for Barack Obama using lexicon-based analysis:
+
+
+
+
+
+Results of the time-varying popularity index for Barack Obama using ML-based analysis:
+
+
+Results of the time-varying popularity index for Benjamin Netanyahu using lexicon-based analysis:
+
+
+Results of the time-varying popularity index for Benjamin Netanyahu using ML-based analysis:
+
+
+We chose to use the subdivided bar graphs of visualization since it is a good idea to describe the ever-changing popularity index we wanted to present.
+By presenting this, you can clearly see the time-varying index for the selected nine-month period for each of the politicians, for each of the classification methods. It shows the distribution of positive, neutral and negative opinions in each of its columns for all these months.
+In addition, this visualization can be attempted to relate interesting connections between events that happened in reality related to each of the politicians, and how they affected their public popularity and how it was interpreted in each of the classification languages.
+For example, in mid-February 2018, a number of extensive articles were published about the criminal cases against Netanyahu in the New York Times. Looking at the graphs, it can be seen that the publication of the article on the one hand increased Netanyahu's percentage of support by almost ten percent from January according to the lexicon, and on the other, reduced the percentage of negative feelings toward him by a similar number from January according to the ML analysis.
+These changes stem from taking the position of the surfing public exposed to the affair. What is interesting about these results is that the surfers are not in a hurry to believe media publications regarding the investigations that are being published, in which negative publications even increase the positive sentiment towards Netanyahu, or alternatively reduce the negative sentiment towards him.
+
+Impediments:
+
+During the Experiments, we faced the following issues:
+1. Classifier training takes a very large amount of runtime and RAM.
+2. To deal with the time problem, we used a Python pickle object that lets you save the post-workout classifiers as pickle files. The files must be placed in the folder where the code is run and can be run repeatedly without having to retrain them every time.
+3. To deal with the place problem, we limited the Training and Testing data size to a maximum of 30,000 responses. In addition, there is a requirement for more than GB16 of RAM on the computer running the classified training code.
+4. The use of a voting system model to classify the responses in the NYT (post-training) should be conducted in an environment similar to that in which the classifiers were tested on the tagged Testing data. Therefore, to obtain a representative sample of independent responses that we will analyze in each category, and to obtain results in the same environment as we had when running Accuracy testing, we randomized 6,000 responses (as the size of the Testing data) in each category we analyzed.
+5. Classifying a very large amount of comment text is a matter that takes a great deal of running time (tens of hours). How did we deal? Lots and lots of patience :)
+
+Future Work:
+
+As a sequel to future work, we can take into account the following fun points:
+1. Attempt to further improve the accuracy of the results obtained through the implementation of hybrid classification methods - combining ML-based and lexicon methods together that work together to achieve even more accurate results.
+2. Attempt to make prediction about candidate by comments. That is, given a response, try to predict which politician she wrote (without her explicit name of course).
+3. Attempt to build a public influence measure on a politician - how constituent events of various kinds affect the popularity index of politicians and how much they rise and fall as a result.
+4. Continuing Section 3, Building Recommendation Systems for Politicians on How to Act in the Public Arena to Maximize Their Public Sympathy Based on Analysis of the Effect of Past Constituent Events and Their Current Index of Popularity.
+5. Analysis and attempt to predict what the public will see as fake news, such as negative publications about politicians who actually reinforce their positive image and raise their sympathy in the public.
+
+Brief conclusion:
+
+In this project, we analyzed user comments in the New York Times and built time-varying popularity metrics based on analyzing a very large amount of user responses to articles and articles published in the paper. We used two major methods to accomplish the task and both lexicon-based and ML-based methods. We explained how we defined, created, and applied each of these methods to the relevant NYT pool of responses to build the Politics Popularity Index. We presented the results obtained together with a comparison with the data collected from research conducted by organizations and bodies engaged in the field and described selected cases, together with the reasons for the differences between the results of the two methods. We then presented a visualization of the results, explained why it fits with the politician's popularity index and what can be deduced from it with an example. To conclude, we had to deal with a number of difficulties during the work on the project, as well as interesting future development options that could be implemented later.
