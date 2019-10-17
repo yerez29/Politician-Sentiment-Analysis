@@ -1,4 +1,4 @@
-﻿Introduction and problem description:
+Introduction and problem description:
 
 Over the past few years, opinion polls have been an ever-increasing field of politicians who want to know public opinion about them through receiving feedback, which can help them improve their functioning, because of their desire to please the public at large and their constituency in particular. For this reason, such surveys have become extremely popular in general and especially during election periods. Such opinion polls are usually based on traditional methods such as telephone interviews, face-to-face interviews, street surveys, self-filling questionnaires in the mail, etc. The advancement of technology over the last decade has created new sources from which to obtain particularly large amounts of opinions on political and current issues, from sources such as social networks, news sites and blogs, the amount of data that can be extracted is infinitely greater than traditional methods.
 Entering the Big Data era has brought with it a variety of methods for dealing with and analyzing such large amounts of information, from which insights and conclusions can be drawn, such as public opinion trends and public opinion on political issues. These include reviews of news and current events involving politicians on a daily basis, which may vary according to their functioning and influence the popularity they gain in the public.
@@ -66,19 +66,6 @@ Results:
 From the process described in the previous section, we will generate a large number of graphs that are short of containing all of this report. All graphs will be uploaded to Google Drive under the link posted in the project forum along with all code and data. Therefore, in this section, we will present selected results of all types along with the data with which The comparison and at the top of each result is a brief description of what it presents, followed by an explanation of the difference between lexicon-based and ML-based results.
 
 Distribution of emotions in the last trimester of January 2017 for Donald Trump: right lexicon classification and left ML classification. Below are results from Wikipedia of several US research institutes this month:
-
-	
-
-
-The Distribution of Emotions in February 2017 Responses for Hillary Clinton: Right to Lexicon Classification and Left to ML Classification. Below are results for comparison from the American GALLUP Research Institute this month:
-
-
-
-
-
-Distribution of emotions in the second trimester of February 2018 for Barack Obama: right lexicon classification and left ML classification. Below are results for comparison from the American GALLUP Research Institute this month (Barack Obama in fourth row):
-
-
 
 
 
