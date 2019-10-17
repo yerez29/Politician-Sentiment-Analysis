@@ -1,6 +1,5 @@
 """
-This file is part of A Needle in a Data Haystack (course 67978) Project, group 20.
-Made by: Yair Erez, Orel Keliahu and Batel Luzon.
+Made by: Yair Erez.
 This file contain code for Machine Learning classifiers training on twitter politics related comments, later by used
 to analyze nyt readers comments (in "Ml_Sentiment.py" file).
 NOTE: TO RUN THIS CODE "trainData.csv" file NEED TO BE LOCATED IN WORKING DIRECTORY.

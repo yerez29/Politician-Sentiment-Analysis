@@ -1,6 +1,5 @@
 """
-This file is part of A Needle in a Data Haystack (course 67978) Project, group 20.
-Made by: Yair Erez, Orel Keliahu and Batel Luzon.
+Made by: Yair Erez.
 This file contain code for lexicon-based analysis of nyt readers comments and results presentations in order to build
 politicians popularity measurements.
 NOTE: TO RUN THIS CODE ALL NEW YORK TIMES DATA FILES NEED TO BE LOCATED IN WORKING DIRECTORY.
